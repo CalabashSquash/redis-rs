@@ -4,17 +4,19 @@ use nom::{bytes::complete::{tag, take_while_m_n}, character::{complete::{self, a
 pub enum RespElement<'a> {
     SimpleString(&'a str),
     BulkString(&'a str),
+    EmptyBulkString,
     Array(Vec<RespElement<'a>>),
-    Integer(u64)
+    Integer(u64),
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum OptionalRespElement<'a> {
-    SimpleString(Option<&'a str>),
-    BulkString(Option<&'a str>),
-    Array(Option<Vec<RespElement<'a>>>),
-    Integer(Option<u64>)
-}
+// // We need OptionalRespElement because there's a possibility of an empty string, which is BulkString None
+// #[derive(Debug, PartialEq, Eq)]
+// pub enum OptionalRespElement<'a> {
+//     SimpleString(Option<&'a str>),
+//     BulkString(Option<&'a str>),
+//     Array(Option<Vec<OptionalRespElement<'a>>>),
+//     Integer(Option<u64>)
+// }
 
 
 pub fn decode<'a>(message: &'a String) -> RespElement<'a> {

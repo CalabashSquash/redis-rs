@@ -5,11 +5,11 @@ pub fn is_correct_command(command: &[RespElement], correct_command: &str) -> Res
     match &command[0] {
         RespElement::BulkString(s) => {
             if s.to_ascii_lowercase().as_str() != correct_command {
-                return Err(CommandError::new(format!("Command is not {correct_command}")));
+                return Err(CommandError::new(format!("Command is not {correct_command}").as_str()));
             }
             return Ok(())
         },
-        _ => return Err(CommandError::new(format!("Command is not {correct_command}"))),
+        _ => return Err(CommandError::new(format!("Command is not {correct_command}").as_str())),
     }
 
 }

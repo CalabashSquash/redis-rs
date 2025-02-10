@@ -1,13 +1,13 @@
 // Handle incoming redis commands.
-// Dispatching them, responding, and checking for multiple commands.
+// Dispatching them, responding
 
 use std::collections::HashMap;
 
 use tokio::{io::{self, AsyncReadExt}, net::TcpStream, time::error::Error};
 
-use crate::{dispatch::dispatch, redis::RedisState};
+use crate::{dispatch::dispatch, storage::RedisStorage};
 
-pub async fn multi_commands(stream: &mut TcpStream, storage: &mut HashMap<String, String>) {
+pub async fn multi_commands(stream: &mut TcpStream, storage: &mut RedisStorage<'_>) {
     loop {
         let mut buff = [0u8; 128];
         let read_result = stream.read(&mut buff).await;

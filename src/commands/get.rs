@@ -1,28 +1,35 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
-use crate::{decode::{OptionalRespElement, RespElement}, dispatch::CommandError, encode::encode, util::validate::is_correct_command};
+use crate::{decode::RespElement, dispatch::CommandError, encode::encode, redis::RedisState, storage::{RedisStorage, RedisValue}, util::validate::is_correct_command};
 
-pub fn get(command: &[RespElement], storage: &HashMap<String, String>) -> Result<Vec<u8>, CommandError> {
+pub fn get(command: &[RespElement], storage: &RedisStorage) -> Result<Vec<u8>, CommandError> {
     is_correct_command(command, "get")?;
     if command.len() < 2 {
-        return Err(CommandError::new(String::from("GET Command length is less than 3")));
+        return Err(CommandError::new("GET Command length is less than 2"));
     }
 
     let key: &str;
-    let value: Option<&String>;
+    let value: Option<&RedisValue>;
     if let RespElement::BulkString(k) = &command[1] {
         key = k;
     } else {
-        return Err(CommandError::new(String::from("GET key is not string")));
+        return Err(CommandError::new("GET key is not string"));
     }
 
-    println!("key: {key}");
-
-    value = storage.get(key);
+    value = storage.db.get(key);
     if let Some(v) = value {
-        println!("value: {v}");
-        return Ok(encode(&OptionalRespElement::BulkString(Some(v))));
+        println!("value: {v:#?}");
+        // TODO check expiry
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap() // Will only fail if time goes backwards
+            .as_millis();
+        let expiration_time = v.expiry;
+        if now >= expiration_time {
+            return Ok(encode(&RespElement::EmptyBulkString)?)
+        }
+        return Ok(encode(&RespElement::BulkString(&v.value))?);
     }
 
-    return Ok(encode(&OptionalRespElement::BulkString(None)));
+    return Ok(encode(&RespElement::EmptyBulkString)?);
 }
